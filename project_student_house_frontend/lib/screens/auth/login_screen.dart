@@ -43,18 +43,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final data = jsonDecode(response.body);
 
+      if (!mounted) return;
+
       if (response.statusCode == 200) {
 
-        if (!mounted) return;
-
         setState(() {
-          message = "Login success ✅";
+          message = "Connexion réussie ✅";
         });
 
-        print("TOKEN: ${data['token']}");
-        print("USER: ${data['user']}");
-
-        // 🚀 REDIRECTION VERS DASHBOARD
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -66,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       } else {
         setState(() {
-          message = data['message'] ?? "Login failed ❌";
+          message = data['message'] ?? "Email ou mot de passe incorrect ❌";
         });
       }
 
@@ -87,27 +83,30 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey.shade100,
+
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
+
           child: Column(
             children: [
 
+              // 🔵 LOGO
               const CircleAvatar(
-                radius: 50,
-                backgroundColor: Colors.blueAccent,
-                child: Icon(Icons.home, size: 50, color: Colors.white),
+                radius: 45,
+                backgroundColor: Color.fromARGB(255, 60, 142, 209),
+                child: Icon(Icons.home, size: 45, color: Colors.white),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 15),
 
               const Text(
                 "Student House",
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: Color.fromARGB(255, 60, 142, 209),
                 ),
               ),
 
@@ -120,51 +119,78 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 30),
 
+              // 📧 EMAIL
               TextField(
                 controller: emailController,
                 decoration: InputDecoration(
                   hintText: "Email",
                   prefixIcon: const Icon(Icons.email),
+                  filled: true,
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
               ),
 
               const SizedBox(height: 15),
 
+              // 🔒 PASSWORD
               TextField(
                 controller: passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Mot de passe",
                   prefixIcon: const Icon(Icons.lock),
+                  filled: true,
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
+              // 🔵 BUTTON LOGIN (COULEUR MODIFIÉE)
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : login,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 60, 142, 209), // 🔵 TA COULEUR
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
                   child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Se connecteer"),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          "Se connecter",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
 
               const SizedBox(height: 15),
 
+              // ⚠️ MESSAGE
               Text(
                 message,
                 style: const TextStyle(color: Colors.red),
               ),
 
+              const SizedBox(height: 10),
+
+              // 🔗 REGISTER
               TextButton(
                 onPressed: () {
                   Navigator.push(
@@ -176,10 +202,9 @@ class _LoginScreenState extends State<LoginScreen> {
                 },
                 child: const Text(
                   "Pas encore de compte ? S'inscrire",
-                  style: TextStyle(color: Colors.blue),
+                  style: TextStyle(color: Color.fromARGB(255, 60, 142, 209)),
                 ),
               ),
-
             ],
           ),
         ),

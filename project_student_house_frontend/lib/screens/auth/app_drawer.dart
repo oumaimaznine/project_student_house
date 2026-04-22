@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'settings_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   final dynamic user;
@@ -32,7 +33,7 @@ class AppDrawer extends StatelessWidget {
                 const SizedBox(height: 10),
 
                 Text(
-                  user['name'] ?? "User",
+                  user != null ? (user['name'] ?? "User") : "User",
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 18,
@@ -43,7 +44,7 @@ class AppDrawer extends StatelessWidget {
                 const SizedBox(height: 5),
 
                 Text(
-                  user['email'] ?? "",
+                  user != null ? (user['email'] ?? "") : "",
                   style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 13,
@@ -53,8 +54,7 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 10),
-
+          // 🟡 MENU
           ListTile(
             leading: const Icon(Icons.home, color: Colors.indigo),
             title: const Text("Accueil"),
@@ -64,14 +64,21 @@ class AppDrawer extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.settings, color: Colors.indigo),
             title: const Text("Paramètres"),
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const SettingsScreen(),
+                ),
+              );
+            },
           ),
 
-          const Spacer(), // 👈 pousse logout en bas
+          const Spacer(), // 🔥 pousse tout vers le haut
 
           const Divider(),
 
-          // 🔴 LOGOUT EN BAS
+          // 🔴 LOGOUT EN BAS COMPLET
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text(
@@ -86,6 +93,8 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
+
+          const SizedBox(height: 10),
         ],
       ),
     );

@@ -42,7 +42,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       final data = jsonDecode(response.body);
 
+      if (!mounted) return;
+
       if (response.statusCode == 201 || response.statusCode == 200) {
+
         setState(() {
           message = "Compte créé avec succès ✅";
         });
@@ -61,24 +64,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
         message = "Erreur serveur ❌";
       });
       print(e);
+    } finally {
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
-
-    setState(() {
-      isLoading = false;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey.shade100,
+
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
+
           child: Column(
             children: [
 
-              const Icon(Icons.home, size: 80, color: Colors.blue),
+              // 🔵 ICON
+              const CircleAvatar(
+                radius: 45,
+                backgroundColor: Color.fromARGB(255, 60, 142, 209),
+                child: Icon(Icons.home, size: 45, color: Colors.white),
+              ),
 
               const SizedBox(height: 10),
 
@@ -87,82 +99,111 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
+                  color: Color.fromARGB(255, 60, 142, 209),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              // NAME
+              // 👤 NAME
               TextField(
                 controller: nameController,
                 decoration: InputDecoration(
                   hintText: "Nom",
                   prefixIcon: const Icon(Icons.person),
+                  filled: true,
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
               ),
 
               const SizedBox(height: 15),
 
-              // EMAIL
+              // 📧 EMAIL
               TextField(
                 controller: emailController,
                 decoration: InputDecoration(
                   hintText: "Email",
                   prefixIcon: const Icon(Icons.email),
+                  filled: true,
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
               ),
 
               const SizedBox(height: 15),
 
-              // PASSWORD
+              // 🔒 PASSWORD
               TextField(
                 controller: passwordController,
                 obscureText: true,
                 decoration: InputDecoration(
                   hintText: "Mot de passe",
                   prefixIcon: const Icon(Icons.lock),
+                  filled: true,
+                  fillColor: Colors.white,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
               ),
 
               const SizedBox(height: 20),
 
-              // BUTTON
+              // 🔵 BUTTON REGISTER
               SizedBox(
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
                   onPressed: isLoading ? null : register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color.fromARGB(255, 60, 142, 209),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                    ),
+                  ),
                   child: isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text("Créer un compte"),
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text(
+                          "Créer un compte",
+                          style: TextStyle(color: Colors.white),
+                        ),
                 ),
               ),
 
               const SizedBox(height: 15),
 
+              // ⚠️ MESSAGE
               Text(
                 message,
                 style: const TextStyle(color: Colors.red),
               ),
-              TextButton(
-  onPressed: () {
-    Navigator.pop(context);
-  },
-  child: const Text(
-    "Tu as déjà un compte ? Se connecter",
-    style: TextStyle(color: Colors.blue),
-  ),
-),
 
+              const SizedBox(height: 10),
+
+              // 🔗 LOGIN
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text(
+                  "Tu as déjà un compte ? Se connecter",
+                  style: TextStyle(
+                    color: Color.fromARGB(255, 60, 142, 209),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
