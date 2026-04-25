@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'app_drawer.dart';
-
-// 👉 Pages importées
-import 'studies_screen.dart';
 import 'planning_screen.dart';
 import 'stats_screen.dart';
 import 'ia_solver_screen.dart';
 import 'projects_screen.dart';
 import 'goals_screen.dart';
+import 'bureau_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   final dynamic user;
@@ -16,9 +14,8 @@ class DashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String userName = user != null
-        ? (user['name'] ?? 'Utilisateur')
-        : 'Utilisateur';
+    final String userName =
+        user != null ? (user['name'] ?? 'Utilisateur') : 'Utilisateur';
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
@@ -69,7 +66,7 @@ class DashboardScreen extends StatelessWidget {
                     Icons.school,
                     "Mes Etudes",
                     Colors.green,
-                    const StudiesScreen(),
+                    BureauScreen(),
                   ),
 
                   dashboardCard(
@@ -77,7 +74,7 @@ class DashboardScreen extends StatelessWidget {
                     Icons.calendar_month,
                     "Planning",
                     Colors.orange,
-                    const PlanningScreen(),
+                    PlanningScreen(),
                   ),
 
                   dashboardCard(
@@ -85,7 +82,7 @@ class DashboardScreen extends StatelessWidget {
                     Icons.insights,
                     "Stats",
                     Colors.purple,
-                    const StatsScreen(),
+                    StatsScreen(),
                   ),
 
                   dashboardCard(
@@ -93,7 +90,7 @@ class DashboardScreen extends StatelessWidget {
                     Icons.smart_toy,
                     "IA Solver",
                     Colors.teal,
-                    const IASolverScreen(),
+                    IASolverScreen(),
                   ),
 
                   dashboardCard(
@@ -101,7 +98,7 @@ class DashboardScreen extends StatelessWidget {
                     Icons.work_outline,
                     "Projets",
                     Colors.blue,
-                    const ProjectsScreen(),
+                    ProjectsScreen(),
                   ),
 
                   dashboardCard(
@@ -109,7 +106,7 @@ class DashboardScreen extends StatelessWidget {
                     Icons.flag,
                     "Objectifs",
                     Colors.red,
-                    const GoalsScreen(),
+                    GoalsScreen(),
                   ),
                 ],
               ),
@@ -120,7 +117,6 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  // ⭐ CARD AVEC ANIMATION + NAVIGATION
   Widget dashboardCard(
     BuildContext context,
     IconData icon,
@@ -133,7 +129,7 @@ class DashboardScreen extends StatelessWidget {
         Navigator.push(
           context,
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => page,
+            pageBuilder: (_, animation, __) => page,
             transitionsBuilder: (_, animation, __, child) {
               return FadeTransition(
                 opacity: animation,
@@ -149,10 +145,7 @@ class DashboardScreen extends StatelessWidget {
 
       borderRadius: BorderRadius.circular(20),
 
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        curve: Curves.easeOut,
-
+      child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
@@ -172,9 +165,7 @@ class DashboardScreen extends StatelessWidget {
             const SizedBox(height: 10),
             Text(
               title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ],
         ),
