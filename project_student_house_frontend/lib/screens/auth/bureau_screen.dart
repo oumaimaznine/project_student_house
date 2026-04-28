@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '/services/api_service.dart';
 
 class BureauScreen extends StatefulWidget {
@@ -12,23 +13,72 @@ class _BureauScreenState extends State<BureauScreen> {
   final ApiService api = ApiService();
   final TextEditingController controller = TextEditingController();
 
+  final FlutterLocalNotificationsPlugin notifications =
+      FlutterLocalNotificationsPlugin();
+
   List tasks = [];
   String priority = "medium";
+  DateTime? dueDateTime;
 
   @override
   void initState() {
     super.initState();
+    initNotifications();
     loadTasks();
   }
 
+  // 🔔 INIT NOTIFICATIONS
+  void initNotifications() {
+    const android = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const settings = InitializationSettings(android: android);
+    notifications.initialize(settings);
+  }
+
+  // 🔔 SHOW NOTIFICATION
+  Future<void> showReminder(String title) async {
+    const androidDetails = AndroidNotificationDetails(
+      'task_channel',
+      'Tasks',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const details = NotificationDetails(android: androidDetails);
+
+    await notifications.show(
+      0,
+      'Nouvelle tâche',
+      title,
+      details,
+    );
+  }
+
+  // 📅 LOAD + SORT BY DATE
   Future<void> loadTasks() async {
     tasks = await api.getTasks();
+
+    tasks.sort((a, b) {
+      if (a['due_date'] == null || b['due_date'] == null) return 0;
+      return DateTime.parse(a['due_date'])
+          .compareTo(DateTime.parse(b['due_date']));
+    });
+
     setState(() {});
   }
 
-  // 🎨 Couleur priorité
-  Color getColor(String p) {
-    switch (p.toLowerCase()) {
+  // 🔴 TASK OVERDUE
+  bool isOverdue(String? dueDate) {
+    if (dueDate == null) return false;
+    return DateTime.parse(dueDate).isBefore(DateTime.now());
+  }
+
+  // 🎨 COLOR PRIORITY + OVERDUE
+  Color getColor(String priority, String? dueDate) {
+    if (dueDate != null && isOverdue(dueDate)) {
+      return Colors.red;
+    }
+
+    switch (priority.toLowerCase()) {
       case "high":
         return Colors.red;
       case "medium":
@@ -38,7 +88,7 @@ class _BureauScreenState extends State<BureauScreen> {
     }
   }
 
-  // 🏷 BADGE PRIORITÉ (NEW)
+  // 🏷 PRIORITY BADGE
   Widget priorityBadge(String p) {
     Color color;
 
@@ -71,7 +121,7 @@ class _BureauScreenState extends State<BureauScreen> {
     );
   }
 
-  // 📅 Format date Laravel → Flutter
+  // 📅 FORMAT DATE
   String formatDate(String date) {
     final dt = DateTime.parse(date);
     return "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} "
@@ -79,12 +129,21 @@ class _BureauScreenState extends State<BureauScreen> {
   }
 
   // ➕ ADD TASK
-  void addTask() async {
+  Future<void> addTask() async {
     if (controller.text.isEmpty) return;
+    if (dueDateTime == null) return;
 
-    await api.addTask(controller.text, priority);
+    await api.addTask(
+      controller.text,
+      priority,
+      dueDateTime!.toIso8601String(),
+    );
+
+    showReminder(controller.text);
 
     controller.clear();
+    dueDateTime = null;
+
     Navigator.pop(context);
     loadTasks();
   }
@@ -95,10 +154,11 @@ class _BureauScreenState extends State<BureauScreen> {
     loadTasks();
   }
 
-  // ➕ MODERN BOTTOM SHEET
+  // 📅 BOTTOM SHEET
   void showAddSheet() {
     controller.clear();
     priority = "medium";
+    dueDateTime = null;
 
     showModalBottomSheet(
       context: context,
@@ -106,91 +166,141 @@ class _BureauScreenState extends State<BureauScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (_) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-          top: 20,
-          left: 20,
-          right: 20,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 50,
-              height: 5,
-              decoration: BoxDecoration(
-                color: Colors.grey[400],
-                borderRadius: BorderRadius.circular(20),
-              ),
-            ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return SingleChildScrollView(
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                  top: 20,
+                  left: 20,
+                  right: 20,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
 
-            const SizedBox(height: 15),
+                    const Text(
+                      "Nouvelle tâche",
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.indigo,
+                      ),
+                    ),
 
-            const Text(
-              "Nouvelle tâche",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.indigo,
-              ),
-            ),
+                    const SizedBox(height: 20),
 
-            const SizedBox(height: 20),
+                    // TITLE
+                    TextField(
+                      controller: controller,
+                      decoration: InputDecoration(
+                        labelText: "Tâche",
+                        prefixIcon: const Icon(Icons.task),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                    ),
 
-            TextField(
-              controller: controller,
-              decoration: InputDecoration(
-                labelText: "Que dois-tu faire ?",
-                prefixIcon: const Icon(Icons.task),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
+                    const SizedBox(height: 15),
+
+                    // PRIORITY
+                    DropdownButtonFormField(
+                      value: priority,
+                      items: const [
+                        DropdownMenuItem(value: "high", child: Text("HIGH")),
+                        DropdownMenuItem(value: "medium", child: Text("MEDIUM")),
+                        DropdownMenuItem(value: "low", child: Text("LOW")),
+                      ],
+                      onChanged: (v) {
+                        setModalState(() {
+                          priority = v.toString();
+                        });
+                      },
+                      decoration: InputDecoration(
+                        labelText: "Priorité",
+                        prefixIcon: const Icon(Icons.flag),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    // DATE PICKER
+                    InkWell(
+                      onTap: () async {
+                        DateTime? date = await showDatePicker(
+                          context: context,
+                          initialDate: DateTime.now(),
+                          firstDate: DateTime.now(),
+                          lastDate: DateTime(2100),
+                        );
+
+                        if (date == null) return;
+
+                        TimeOfDay? time = await showTimePicker(
+                          context: context,
+                          initialTime: TimeOfDay.now(),
+                        );
+
+                        if (time == null) return;
+
+                        setModalState(() {
+                          dueDateTime = DateTime(
+                            date.year,
+                            date.month,
+                            date.day,
+                            time.hour,
+                            time.minute,
+                          );
+                        });
+                      },
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.all(15),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.event),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                dueDateTime == null
+                                    ? "Choisir la date de réalisation"
+                                    : "${dueDateTime!.day}/${dueDateTime!.month}/${dueDateTime!.year} "
+                                      "${dueDateTime!.hour.toString().padLeft(2, '0')}:${dueDateTime!.minute.toString().padLeft(2, '0')}",
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    ElevatedButton(
+                      onPressed: addTask,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.indigo,
+                        foregroundColor: Colors.white,
+                        minimumSize: const Size(double.infinity, 50),
+                      ),
+                      child: const Text("Enregistrer"),
+                    ),
+                  ],
                 ),
               ),
-            ),
-
-            const SizedBox(height: 15),
-
-            DropdownButtonFormField(
-              value: priority,
-              items: const [
-                DropdownMenuItem(value: "high", child: Text("HIGH")),
-                DropdownMenuItem(value: "medium", child: Text("MEDIUM")),
-                DropdownMenuItem(value: "low", child: Text("LOW")),
-              ],
-              onChanged: (v) => setState(() => priority = v.toString()),
-              decoration: InputDecoration(
-                labelText: "Priorité",
-                prefixIcon: const Icon(Icons.flag),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: addTask,
-                icon: const Icon(Icons.add),
-                label: const Text("Enregistrer dans le bureau"),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.indigo,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
+            );
+          },
+        );
+      },
     );
   }
 
@@ -212,14 +322,11 @@ class _BureauScreenState extends State<BureauScreen> {
                 final t = tasks[index];
 
                 return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
                   child: ListTile(
                     leading: Container(
                       width: 5,
                       height: 50,
-                      color: getColor(t['priority']),
+                      color: getColor(t['priority'], t['due_date']),
                     ),
 
                     title: Text(
@@ -230,18 +337,20 @@ class _BureauScreenState extends State<BureauScreen> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const SizedBox(height: 4),
-
-                        Text(
-                          t['created_at'] != null
-                              ? formatDate(t['created_at'])
-                              : "",
-                          style: const TextStyle(fontSize: 12),
-                        ),
-
                         const SizedBox(height: 5),
 
                         priorityBadge(t['priority']),
+
+                        const SizedBox(height: 5),
+
+                        if (t['due_date'] != null)
+                          Text(
+                            "📅 ${formatDate(t['due_date'])}",
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.blue,
+                            ),
+                          ),
                       ],
                     ),
 

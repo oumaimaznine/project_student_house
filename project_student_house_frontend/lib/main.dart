@@ -9,6 +9,7 @@ void main() {
   runApp(const StudentHouseApp());
 }
 
+
 class StudentHouseApp extends StatefulWidget {
   const StudentHouseApp({super.key});
 
